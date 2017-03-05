@@ -1,14 +1,18 @@
 package com.codepath.apps.mysimpletweets;
 
-import org.scribe.builder.api.Api;
-import org.scribe.builder.api.FlickrApi;
-import org.scribe.builder.api.TwitterApi;
-
 import android.content.Context;
+import android.text.format.DateUtils;
 
 import com.codepath.oauth.OAuthBaseClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+
+import org.scribe.builder.api.Api;
+import org.scribe.builder.api.TwitterApi;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /*
  * 
@@ -23,33 +27,55 @@ import com.loopj.android.http.RequestParams;
  * 
  */
 public class TwitterClient extends OAuthBaseClient {
-	public static final Class<? extends Api> REST_API_CLASS = TwitterApi.class; // Change this
-	public static final String REST_URL = "https://api.twitter.com/1.1"; // Change this, base API URL
-	public static final String REST_CONSUMER_KEY = "sG6WFNvrQ0m2uPsAAx98DAMA3";       // Change this
-	public static final String REST_CONSUMER_SECRET = "n6fpQSLBfpdqdDqIbLvYIdCgagwylHvDCxMrje9bVi7lISewKY"; // Change this
-	public static final String REST_CALLBACK_URL = "oauth://cpsimpletweets"; // Change this (here and in manifest)
+    public static final Class<? extends Api> REST_API_CLASS = TwitterApi.class; // Change this
+    public static final String REST_URL = "https://api.twitter.com/1.1"; // Change this, base API URL
+    public static final String REST_CONSUMER_KEY = "sG6WFNvrQ0m2uPsAAx98DAMA3";       // Change this
+    public static final String REST_CONSUMER_SECRET = "n6fpQSLBfpdqdDqIbLvYIdCgagwylHvDCxMrje9bVi7lISewKY"; // Change this
+    public static final String REST_CALLBACK_URL = "oauth://cpsimpletweets"; // Change this (here and in manifest)
 
-	public TwitterClient(Context context) {
-		super(context, REST_API_CLASS, REST_URL, REST_CONSUMER_KEY, REST_CONSUMER_SECRET, REST_CALLBACK_URL);
-	}
-
-	// METHOD == ENDPOINT
-
-	// HomeTimeline - Gets us the home timeline
+    public TwitterClient(Context context) {
+        super(context, REST_API_CLASS, REST_URL, REST_CONSUMER_KEY, REST_CONSUMER_SECRET, REST_CALLBACK_URL);
+    }
 
 
-	// CHANGE THIS
-	// DEFINE METHODS for different API endpoints here
-	public void getInterestingnessList(AsyncHttpResponseHandler handler) {
-		String apiUrl = getApiUrl("?nojsoncallback=1&method=flickr.interestingness.getList");
-		// Can specify query string params directly or through RequestParams.
-		RequestParams params = new RequestParams();
-		params.put("format", "json");
-		client.get(apiUrl, params, handler);
-	}
+    // METHOD == ENDPOINT
+
+    // HomeTimeline - Gets us the home timeline
+    // GET statuses/home_timeline.json
+    //      count=25
+    //      since_id=1
+    public void getHomeTimeline(AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("statuses/home_timeline.json");
+        // Specify the params
+        RequestParams params = new RequestParams();
+        params.put("count", 25);
+        params.put("since_id", 1);
+        // Execute the request
+        getClient().get(apiUrl, params, handler);
+    }
+
+    // getRelativeTimeAgo("Mon Apr 01 21:16:23 +0000 2014");
+    public String getRelativeTimeAgo(String rawJsonDate) {
+        String twitterFormat = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+        SimpleDateFormat sf = new SimpleDateFormat(twitterFormat, Locale.ENGLISH);
+        sf.setLenient(true);
+
+        String relativeDate = "";
+        try {
+            long dateMillis = sf.parse(rawJsonDate).getTime();
+            relativeDate = DateUtils.getRelativeTimeSpanString(dateMillis,
+                    System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS).toString();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return relativeDate;
+    }
+
+    // COMPOSE TWEET
 
 	/* 1. Define the endpoint URL with getApiUrl and pass a relative path to the endpoint
-	 * 	  i.e getApiUrl("statuses/home_timeline.json");
+     * 	  i.e getApiUrl("statuses/home_timeline.json");
 	 * 2. Define the parameters to pass to the request (query or body)
 	 *    i.e RequestParams params = new RequestParams("foo", "bar");
 	 * 3. Define the request method and make a call to the client
@@ -57,3 +83,4 @@ public class TwitterClient extends OAuthBaseClient {
 	 *    i.e client.post(apiUrl, params, handler);
 	 */
 }
+
